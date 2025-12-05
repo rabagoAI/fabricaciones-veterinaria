@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabricaciones Veterinaria</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bibliotecas para exportación -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Aplicación Principal (visible desde el inicio) -->
+    <div id="app-container">
+        <!-- Barra de Navegación -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <button class="nav-toggle" id="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <i class="fas fa-paw"></i>
+                    <h1>Fabricaciones Veterinaria</h1>
+                </div>
+            </div>
+            <div class="nav-right">
+                <button class="btn-icon" id="theme-toggle" title="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="user-profile">
+                    <span id="current-user">Usuario</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <ul class="nav-menu">
+                <li class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" data-section="table">
+                    <i class="fas fa-table"></i>
+                    <span>Tabla de Datos</span>
+                </li>
+                <li class="nav-item" data-section="kanban">
+                    <i class="fas fa-tasks"></i>
+                    <span>Panel Kanban</span>
+                </li>
+                <li class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="app-version">v1.0</div>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content" id="main-content">
+            <!-- Sección Dashboard -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-home"></i> Dashboard</h2>
+                    <p>Visión general de las fabricaciones veterinarias</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card animate-slide-up">
+                        <div class="stat-icon" style="background-color: #4CAF50;">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-products">0</h3>
+                            <p>Productos Totales</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="stat-icon" style="background-color: #2196F3;">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-quantity">0</h3>
+                            <p>Cantidad Total (L)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card animate-slide-up" style="animation-delay: 0.2s;">
+                        <div class="stat-icon" style="background-color: #FF9800;">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="current-month">0</h3>
+                            <p>Fabricaciones (Este Mes)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="stat-icon" style="background-color: #9C27B0;">
+                            <i class="fas fa-prescription-bottle-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="top-product">-</h3>
+                            <p>Producto Más Fabricado</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <h3>Acciones Rápidas</h3>
+                    <div class="actions-grid">
+                        <button class="action-btn" id="quick-add-btn">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Añadir Registro</span>
+                        </button>
+                        <button class="action-btn" id="quick-export-btn">
+                            <i class="fas fa-file-export"></i>
+                            <span>Exportar Datos</span>
+                        </button>
+                        <button class="action-btn" id="quick-kanban-btn">
+                            <i class="fas fa-tasks"></i>
+                            <span>Ver Panel Kanban</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-info-circle info"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p><strong>Aplicación cargada</strong> - Lista para usar</p>
+                                <small>Justo ahora</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Tabla de Datos -->
+            <section id="table-section" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-table"></i> Tabla de Fabricaciones</h2>
+                    <div class="section-controls">
+                        <button class="btn-primary" id="add-record-btn">
+                            <i class="fas fa-plus"></i> Añadir Registro
+                        </button>
+                        <button class="btn-secondary import-excel" id="import-excel-btn">
+                            <i class="fas fa-file-import"></i> Importar Excel
+                        </button>
+                        <div class="export-buttons">
+                            <button class="btn-secondary" id="export-excel-btn">
+                                <i class="fas fa-file-excel"></i> Exportar Excel
+                            </button>
+                            <button class="btn-secondary export-xlsx" id="export-xlsx-btn">
+                                <i class="fas fa-file-excel"></i> Exportar XLSX
+                            </button>
+                            <button class="btn-secondary export-pdf" id="export-pdf-btn">
+                                <i class="fas fa-file-pdf"></i> Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label for="product-filter"><i class="fas fa-filter"></i> Filtrar por Producto:</label>
+                        <select id="product-filter" class="filter-select">
+                            <option value="all">Todos los Productos</option>
+                            <!-- Las opciones se llenarán dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="year-filter">Filtrar por Año:</label>
+                        <select id="year-filter" class="filter-select">
+                            <option value="all">Todos los Años</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="month-filter">Filtrar por Mes:</label>
+                        <select id="month-filter" class="filter-select">
+                            <option value="all">Todos los Meses</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <button class="btn-clear-filters" id="clear-filters-btn">
+                        <i class="fas fa-times"></i> Limpiar Filtros
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="data-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha Fabricación</th>
+                                <th>Producto</th>
+                                <th>Lote</th>
+                                <th>Cantidad (L)</th>
+                                <th>Mes</th>
+                                <th>Año</th>
+                                <th>Pérdidas</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Los datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-footer">
+                    <div class="pagination-info">
+                        Mostrando <span id="current-count">0</span> de <span id="total-count">0</span> registros
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="prev-page" disabled>
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="page-indicator">Página 1</span>
+                        <button class="pagination-btn" id="next-page">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Panel Kanban -->
+            <section id="kanban-section" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tasks"></i> Panel Kanban</h2>
+                    <div class="section-controls">
+                        <button class="btn-primary" id="add-task-btn">
+                            <i class="fas fa-plus"></i> Añadir Tarea
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="kanban-board">
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3><i class="fas fa-clipboard-list"></i> Pendiente</h3>
+                            <span class="task-count">0</span>
+                        </div>
+                        <div class="task-list" id="pending-tasks">
+                            <!-- Tareas pendientes -->
+                        </div>
+                        <button class="add-task-to-column" data-status="pending">
+                            <i class="fas fa-plus"></i> Añadir tarea
+                        </button>
+                    </div>
+                    
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3><i class="fas fa-spinner"></i> En Proceso</h3>
+                            <span class="task-count">0</span>
+                        </div>
+                        <div class="task-list" id="inprogress-tasks">
+                            <!-- Tareas en proceso -->
+                        </div>
+                        <button class="add-task-to-column" data-status="inprogress">
+                            <i class="fas fa-plus"></i> Añadir tarea
+                        </button>
+                    </div>
+                    
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3><i class="fas fa-check-circle"></i> Completado</h3>
+                            <span class="task-count">0</span>
+                        </div>
+                        <div class="task-list" id="completed-tasks">
+                            <!-- Tareas completadas -->
+                        </div>
+                        <button class="add-task-to-column" data-status="completed">
+                            <i class="fas fa-plus"></i> Añadir tarea
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Configuración -->
+            <section id="settings-section" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cog"></i> Configuración</h2>
+                </div>
+                
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-palette"></i> Apariencia</h3>
+                        <div class="settings-group">
+                            <label>Tema de la Aplicación</label>
+                            <div class="theme-options">
+                                <button class="theme-option active" data-theme="light">
+                                    <i class="fas fa-sun"></i> Claro
+                                </button>
+                                <button class="theme-option" data-theme="dark">
+                                    <i class="fas fa-moon"></i> Oscuro
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <label for="animations-toggle">Animaciones</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="animations-toggle" checked>
+                                <label for="animations-toggle" class="toggle-slider"></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fas fa-database"></i> Datos de la Aplicación</h3>
+                        <div class="settings-group">
+                            <p>Total de registros: <strong id="settings-total-records">0</strong></p>
+                            <p>Productos únicos: <strong id="settings-unique-products">0</strong></p>
+                            <p>Última actualización: <strong id="settings-last-update">Hoy</strong></p>
+                        </div>
+                        <div class="settings-actions">
+                            <button class="btn-secondary" id="backup-data-btn">
+                                <i class="fas fa-download"></i> Respaldar Datos
+                            </button>
+                            <button class="btn-danger" id="reset-data-btn">
+                                <i class="fas fa-trash-alt"></i> Restablecer Datos
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fas fa-info-circle"></i> Información</h3>
+                        <div class="settings-group">
+                            <p><strong>Aplicación de Fabricaciones Veterinaria</strong></p>
+                            <p>Versión: 1.0</p>
+                            <p>Diseñada para gestionar registros de producción veterinaria</p>
+                            <p>Funcionalidades: Tabla CRUD, Panel Kanban, Filtros, Exportación, Importación Excel</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para Añadir/Editar Registro -->
+    <div id="record-modal" class="modal">
+        <div class="modal-content animate-scale">
+            <div class="modal-header">
+                <h3 id="modal-title">Añadir Nuevo Registro</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="record-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-product">Producto *</label>
+                            <input type="text" id="form-product" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-lote">Lote *</label>
+                            <input type="text" id="form-lote" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-date">Fecha Fabricación *</label>
+                            <input type="date" id="form-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-quantity">Cantidad (L) *</label>
+                            <input type="number" id="form-quantity" min="0" step="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-month">Mes *</label>
+                            <select id="form-month" required>
+                                <option value="">Seleccione un mes</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-year">Año *</label>
+                            <select id="form-year" required>
+                                <option value="">Seleccione un año</option>
+                                <option value="2022">2022</option>
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-losses">Pérdidas (L)</label>
+                            <input type="text" id="form-losses" placeholder="Ej: 50 LITROS">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="form-observations">Observaciones</label>
+                        <textarea id="form-observations" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="modal-submit">Guardar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Confirmación de Importación -->
+    <div id="import-confirm-modal" class="modal">
+        <div class="modal-content animate-scale">
+            <div class="modal-header">
+                <h3 id="import-modal-title">Confirmar Importación</h3>
+                <button class="modal-close" id="import-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="import-summary">
+                    <!-- El resumen se generará dinámicamente -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="import-modal-cancel">Cancelar</button>
+                    <button type="button" class="btn-primary" id="import-modal-confirm">Importar Datos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Añadir Tarea Kanban -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content animate-scale">
+            <div class="modal-header">
+                <h3 id="task-modal-title">Añadir Nueva Tarea</h3>
+                <button class="modal-close" id="task-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="task-form">
+                    <div class="form-group">
+                        <label for="task-title">Título *</label>
+                        <input type="text" id="task-title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-description">Descripción</label>
+                        <textarea id="task-description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-status">Estado *</label>
+                            <select id="task-status" required>
+                                <option value="pending">Pendiente</option>
+                                <option value="inprogress">En Proceso</option>
+                                <option value="completed">Completado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-priority">Prioridad</label>
+                            <select id="task-priority">
+                                <option value="low">Baja</option>
+                                <option value="medium" selected>Media</option>
+                                <option value="high">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-assignee">Asignado a</label>
+                            <input type="text" id="task-assignee" value="Usuario">
+                        </div>
+                        <div class="form-group">
+                            <label for="task-due-date">Fecha Límite</label>
+                            <input type="date" id="task-due-date">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="task-modal-cancel">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="task-modal-submit">Guardar Tarea</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input oculto para seleccionar archivo -->
+    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+
+    <!-- Notificaciones Toast -->
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
