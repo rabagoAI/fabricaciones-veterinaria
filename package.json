@@ -1,0 +1,12 @@
+{
+  "name": "fabricaciones-veterinaria",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de fabricaciones veterinarias",
+  "scripts": {
+    "dev": "echo 'No se requiere servidor de desarrollo'",
+    "build": "echo 'Build completado'"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
