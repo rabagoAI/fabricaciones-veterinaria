@@ -1,4 +1,5 @@
 // middleware.js - Middleware de autenticación para Vercel
+// VERSIÓN CORREGIDA: Excluye archivos estáticos
 
 // ============================================
 // CONFIGURACIÓN DE ACCESO
@@ -8,14 +9,8 @@
 // Formato: 'usuario:contraseña'
 const USUARIOS_AUTORIZADOS = [
   'admin:Veterinaria2025!',       // Usuario administrador
-  'angelines:Envasado2025!',   // Usuario de Angelines
-  'miguel:Produccion2025!'          // Usuario de Miguel
-];
-
-// RUTAS PÚBLICAS (sin autenticación)
-const RUTAS_PUBLICAS = [
-  '/favicon.ico',
-  '/robots.txt'
+  'envasado:Envasado2025!',   // Usuario de producción
+  'calidad:Calidad2025!'          // Usuario de calidad
 ];
 
 // ============================================
@@ -26,10 +21,27 @@ export default function middleware(request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
   
-  console.log(`[Middleware] Acceso a: ${pathname}`);
+  console.log(`[Middleware] Ruta solicitada: ${pathname}`);
   
-  // 1. Permitir acceso a rutas públicas
-  if (RUTAS_PUBLICAS.includes(pathname)) {
+  // 1. PERMITIR ARCHIVOS ESTÁTICOS SIN AUTENTICACIÓN
+  // Estos son archivos que deben servirse directamente
+  const staticFilePatterns = [
+    /\.(css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i,
+    /^\/styles\.css$/,
+    /^\/app\.js$/,
+    /^\/favicon\.ico$/,
+    /^\/robots\.txt$/,
+    /^\/manifest\.json$/
+  ];
+  
+  // Verificar si es un archivo estático
+  const isStaticFile = staticFilePatterns.some(pattern => 
+    pattern.test(pathname)
+  );
+  
+  if (isStaticFile) {
+    console.log(`[Middleware] Sirviendo archivo estático: ${pathname}`);
+    // Devolver null permite que Vercel sirva el archivo estático
     return null;
   }
   
@@ -62,16 +74,20 @@ export default function middleware(request) {
   if (USUARIOS_AUTORIZADOS.includes(credencialValida)) {
     console.log(`[Middleware] Usuario autenticado: ${username}`);
     
-    // Crear respuesta con cookie de autenticación
-    const response = new Response(null, {
-      status: 302,
-      headers: {
-        'Location': pathname,
-        'Set-Cookie': `vet_auth=true; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax`
-      }
-    });
+    // Si es la raíz o una ruta de la app, redirigir a index.html
+    if (pathname === '/' || !pathname.includes('.')) {
+      const response = new Response(null, {
+        status: 302,
+        headers: {
+          'Location': pathname === '/' ? '/' : pathname,
+          'Set-Cookie': `vet_auth=true; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax`
+        }
+      });
+      
+      return response;
+    }
     
-    return response;
+    return null;
   }
   
   console.log(`[Middleware] Credenciales incorrectas para: ${username}`);
@@ -90,6 +106,7 @@ function mostrarLogin(error = false) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Acceso Restringido - Fabricaciones Veterinaria</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
             * {
                 margin: 0;
@@ -265,7 +282,6 @@ function mostrarLogin(error = false) {
                 }
             }
         </style>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
     <body>
         <div class="login-container">
@@ -384,9 +400,9 @@ export const config = {
   matcher: [
     /*
      * Coincide con todas las rutas excepto:
-     * 1. Archivos estáticos (/_next/static, /static, /favicon.ico, etc.)
+     * 1. Archivos estáticos (ya manejados en el código)
      * 2. Rutas API (si las hubiera)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)'
+    '/((?!api/).*)'
   ]
 };
