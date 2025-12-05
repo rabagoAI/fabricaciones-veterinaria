@@ -42,13 +42,25 @@ function mostrarPantallaLogin() {
   // Detener cualquier ejecución previa
   document.body.innerHTML = '';
   
+  // Establecer estilos base para el body
+  document.body.style.margin = '0';
+  document.body.style.padding = '0';
+  document.body.style.boxSizing = 'border-box';
+  document.body.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+  document.body.style.minHeight = '100vh';
+  document.body.style.display = 'flex';
+  document.body.style.justifyContent = 'center';
+  document.body.style.alignItems = 'center';
+  document.body.style.background = 'linear-gradient(135deg, var(--primary-color, #4CAF50) 0%, var(--secondary-color, #2196F3) 100%)';
+  document.body.style.padding = '20px';
+  
   const loginHTML = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Acceso Restringido - Fabricaciones Veterinaria</title>
+        <title>Acceso - Fabricaciones Veterinaria</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
             * {
@@ -71,9 +83,9 @@ function mostrarPantallaLogin() {
                 background: white;
                 border-radius: 16px;
                 box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-                padding: 40px;
+                padding: 50px 40px;
                 width: 100%;
-                max-width: 420px;
+                max-width: 800px;
                 text-align: center;
                 animation: fadeIn 0.5s ease-out;
             }
@@ -83,90 +95,109 @@ function mostrarPantallaLogin() {
                 to { opacity: 1; transform: translateY(0); }
             }
             
-            .logo {
-                margin-bottom: 30px;
-            }
+           .logo {
+    margin-bottom: 50px; /* MÁS ESPACIO ABAJO DEL LOGO */
+}
+
             
             .logo i {
-                font-size: 3.5rem;
-                color: #4CAF50;
-                margin-bottom: 15px;
-                display: block;
-            }
-            
-            .logo h1 {
-                color: #333;
-                font-size: 1.8rem;
-                margin-bottom: 5px;
-            }
+    font-size: 4rem;
+    color: #4CAF50;
+    margin-bottom: 25px; /* MÁS ESPACIO ABAJO DEL ICONO */
+    display: block;
+}
+
+.logo h1 {
+    color: #333;
+    font-size: 2.2rem; /* TEXTO UN POCO MÁS GRANDE */
+    margin-bottom: 15px; /* MÁS ESPACIO ABAJO DEL TÍTULO */
+    font-weight: 600;
+    line-height: 1.3;
+}
             
             .logo p {
-                color: #666;
-                font-size: 1rem;
-            }
-            
-            .login-form {
-                margin-top: 20px;
-            }
-            
-            .form-group {
-                margin-bottom: 20px;
-                text-align: left;
-            }
-            
-            .form-group label {
-                display: block;
-                margin-bottom: 8px;
-                color: #555;
-                font-weight: 500;
-                font-size: 0.95rem;
-            }
-            
-            .form-group input {
-                width: 100%;
-                padding: 14px 16px;
-                border: 2px solid #E0E0E0;
-                border-radius: 8px;
-                font-size: 1rem;
-                transition: border-color 0.3s;
-                background-color: #f9f9f9;
-            }
+    color: #666;
+    font-size: 1.15rem; /* TEXTO UN POCO MÁS GRANDE */
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.login-form {
+    margin-top: 20px; /* MÁS ESPACIO ARRIBA DEL FORMULARIO */
+}
+
+.form-group {
+    margin-bottom: 30px; /* MÁS ESPACIO ENTRE CAMPOS */
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 12px; /* MÁS ESPACIO ABAJO DE LAS ETIQUETAS */
+    color: #555;
+    font-weight: 500;
+    font-size: 1.05rem; /* ETIQUETAS UN POCO MÁS GRANDES */
+    letter-spacing: 0.3px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 18px 20px; /* MÁS PADDING DENTRO DE LOS CAMPOS */
+    border: 2px solid #E0E0E0;
+    border-radius: 10px;
+    font-size: 1.1rem; /* TEXTO MÁS GRANDE DENTRO DE LOS CAMPOS */
+    transition: all 0.3s;
+    background-color: #f9f9f9;
+    color: #333;
+    box-sizing: border-box;
+}
             
             .form-group input:focus {
                 outline: none;
                 border-color: #4CAF50;
                 background-color: white;
+                box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
             }
             
-            .btn-login {
-                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-                color: white;
-                border: none;
-                padding: 16px;
-                width: 100%;
-                border-radius: 8px;
-                font-size: 1.1rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s;
-                margin-top: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
+            .form-group input::placeholder {
+                color: #999;
             }
+            
+            
+.btn-login {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 20px; /* MÁS PADDING EN EL BOTÓN */
+    width: 100%;
+    border-radius: 10px;
+    font-size: 1.25rem; /* TEXTO MÁS GRANDE EN EL BOTÓN */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px; /* MÁS ESPACIO ARRIBA DEL BOTÓN */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+}
             
             .btn-login:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+            }
+            
+            .btn-login:active {
+                transform: translateY(-1px);
             }
             
             .error-message {
                 background-color: #FFEBEE;
                 border-left: 4px solid #F44336;
-                padding: 12px 15px;
-                border-radius: 6px;
-                margin-bottom: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                margin-bottom: 25px;
                 text-align: left;
                 display: none;
                 animation: shake 0.5s;
@@ -174,50 +205,101 @@ function mostrarPantallaLogin() {
             
             @keyframes shake {
                 0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-5px); }
-                75% { transform: translateX(5px); }
+                25% { transform: translateX(-8px); }
+                75% { transform: translateX(8px); }
             }
             
             .error-message i {
                 color: #F44336;
-                margin-right: 8px;
+                margin-right: 10px;
+                font-size: 1.1rem;
             }
             
             .error-message span {
                 color: #C62828;
-                font-size: 0.95rem;
-            }
-            
-            .user-guide {
-                margin-top: 25px;
-                padding: 15px;
-                background-color: #E8F5E9;
-                border-radius: 8px;
-                text-align: left;
-            }
-            
-            .user-guide h3 {
-                color: #2E7D32;
                 font-size: 1rem;
-                margin-bottom: 8px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                font-weight: 500;
             }
             
-            .user-guide ul {
+            .info-box {
+    margin-top: 40px; /* MÁS ESPACIO ARRIBA DE LA CAJA DE INFO */
+    padding: 25px; /* MÁS PADDING DENTRO DE LA CAJA */
+    background-color: #F5F5F5;
+    border-radius: 10px;
+    text-align: left;
+    border: 1px solid #E0E0E0;
+}
+
+.info-box h3 {
+    color: #555;
+    font-size: 1.1rem; /* TÍTULO MÁS GRANDE */
+    margin-bottom: 15px; /* MÁS ESPACIO ABAJO DEL TÍTULO */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.info-box p {
+    color: #666;
+    font-size: 1rem; /* TEXTO MÁS GRANDE */
+    line-height: 1.6; /* MÁS INTERLINEADO */
+    margin-bottom: 15px; /* MÁS ESPACIO ENTRE PÁRRAFOS */
+}
+            
+            .info-box ul {
                 padding-left: 20px;
-                color: #555;
+                color: #666;
                 font-size: 0.9rem;
+                margin-top: 10px;
             }
             
-            .user-guide li {
+            .info-box li {
                 margin-bottom: 5px;
+                line-height: 1.4;
             }
             
+            .info-box strong {
+                color: #333;
+            }
+            
+            /* Responsive */
             @media (max-width: 480px) {
                 .login-container {
-                    padding: 25px;
+                    padding: 35px 25px;
+                    max-width: 90%;
+                }
+                
+                .logo i {
+                    font-size: 3.2rem;
+                }
+                
+                .logo h1 {
+                    font-size: 1.7rem;
+                }
+                
+                .logo p {
+                    font-size: 1rem;
+                }
+                
+                .form-group input {
+                    padding: 14px 16px;
+                    font-size: 1rem;
+                }
+                
+                .btn-login {
+                    padding: 16px;
+                    font-size: 1.1rem;
+                }
+            }
+            
+            @media (max-width: 360px) {
+                .login-container {
+                    padding: 30px 20px;
+                }
+                
+                .logo i {
+                    font-size: 2.8rem;
                 }
                 
                 .logo h1 {
@@ -248,7 +330,7 @@ function mostrarPantallaLogin() {
                         <input type="text" 
                                id="username" 
                                name="username" 
-                               placeholder="Introduce tu usuario" 
+                               placeholder="Introduce tu nombre de usuario" 
                                required 
                                autocomplete="username">
                     </div>
@@ -271,16 +353,15 @@ function mostrarPantallaLogin() {
                 </form>
             </div>
             
-            <div class="user-guide">
-                <h3><i class="fas fa-info-circle"></i> Usuarios de prueba:</h3>
-                <ul>
-                    <li><strong>admin</strong> / Veterinaria2024!</li>
-                    <li><strong>produccion</strong> / Produccion2024!</li>
-                    <li><strong>calidad</strong> / Calidad2024!</li>
-                </ul>
-                <p style="margin-top: 10px; font-size: 0.85rem; color: #666;">
-                    Contacta con el administrador para obtener tus credenciales.
+            <div class="info-box">
+                <h3><i class="fas fa-info-circle"></i> Información de acceso</h3>
+                <p>Introduce tus credenciales proporcionadas por el administrador del sistema.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #777;">
+                    <strong>Nota:</strong> Para acceder en modo demostración puedes usar:
                 </p>
+                <ul>
+                    <li><strong>Usuario:</strong> admin | <strong>Contraseña:</strong> Veterinaria2024!</li>
+                </ul>
             </div>
         </div>
         
@@ -288,12 +369,12 @@ function mostrarPantallaLogin() {
             document.getElementById('loginForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                const username = document.getElementById('username').value;
+                const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value;
                 const errorMsg = document.getElementById('errorMsg');
                 const errorText = document.getElementById('errorText');
                 
-                // Usuarios autorizados (los mismos que en app.js)
+                // Usuarios autorizados
                 const usuarios = {
                     'admin': 'Veterinaria2024!',
                     'produccion': 'Produccion2024!',
@@ -319,20 +400,32 @@ function mostrarPantallaLogin() {
                     // Recargar para cargar la app principal
                     window.location.reload();
                 } else {
-                    errorText.textContent = 'Credenciales incorrectas. Por favor, inténtalo de nuevo.';
+                    errorText.textContent = 'Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.';
                     errorMsg.style.display = 'block';
+                    
+                    // Limpiar y enfocar campo de contraseña
                     document.getElementById('password').value = '';
                     document.getElementById('password').focus();
+                    
+                    // Ocultar error después de 5 segundos
+                    setTimeout(() => {
+                        errorMsg.style.display = 'none';
+                    }, 5000);
                 }
             });
             
-            // Autofocus en el campo de usuario
-            document.getElementById('username').focus();
+            // Autofocus en el campo de usuario al cargar
+            setTimeout(() => {
+                document.getElementById('username').focus();
+            }, 100);
             
-            // Manejar Enter key
+            // Manejar Enter key para enviar formulario
             document.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && document.getElementById('loginForm')) {
-                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                if (e.key === 'Enter') {
+                    const form = document.getElementById('loginForm');
+                    if (form) {
+                        form.dispatchEvent(new Event('submit'));
+                    }
                 }
             });
         </script>
