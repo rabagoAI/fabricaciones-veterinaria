@@ -699,15 +699,6 @@ function setupImportExcel() {
     document.getElementById('import-modal-confirm').addEventListener('click', confirmImport);
 }
 
-// Alternar sidebar
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
-
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('expanded');
-}
-
 // Manejar clic en elementos de navegación
 function handleNavItemClick(e) {
     const section = this.dataset.section;
@@ -812,6 +803,66 @@ function applySavedTheme() {
                 option.classList.add('active');
             }
         });
+    }
+}
+
+// Alternar sidebar (menú hamburguesa)
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('main-content');
+
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+}
+
+// Manejar clic en items de navegación
+function handleNavItemClick() {
+    const section = this.dataset.section;
+
+    // Remover clase active de todos los items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // Agregar clase active al item seleccionado
+    this.classList.add('active');
+
+    // Cambiar a la sección correspondiente
+    switchToSection(section);
+
+    // En móvil, cerrar el sidebar después de seleccionar
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('expanded');
+    }
+}
+
+// Cambiar entre secciones
+function switchToSection(sectionName) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Mostrar la sección seleccionada
+    const targetSection = document.getElementById(`${sectionName}-section`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+
+    // Actualizar datos según la sección
+    switch (sectionName) {
+        case 'dashboard':
+            updateDashboard();
+            break;
+        case 'table':
+            renderTable();
+            break;
+        case 'kanban':
+            renderKanban();
+            break;
     }
 }
 
@@ -1244,9 +1295,13 @@ function processExcelData(workbook, fileName) {
     // Obtener encabezados (primera fila)
     const headers = data[0].map(h => h ? h.toString().trim().toLowerCase() : '');
 
-    // Mapear nombres de columnas esperados
+    // DEBUG: Mostrar encabezados detectados
+    console.log('📋 Encabezados detectados en el Excel:', headers);
+    console.log('📋 Total de columnas:', headers.length);
+
+    // Encabezados esperados (nombres comunes)
     const expectedHeaders = [
-        'producto', 'lote', 'fecha fabricación', 'cantidad (l)',
+        'fecha fabricación', 'producto', 'lote', 'cantidad (l)',
         'mes', 'año', 'pérdidas', 'observaciones'
     ];
 
@@ -1260,10 +1315,16 @@ function processExcelData(workbook, fileName) {
     }
 
     if (!headerMatch) {
-        // Intentar con nombres alternativos
+        // Intentar con nombres alternativos y específicos del Excel del usuario
+        // NOTA: Los encabezados ya están en minúsculas (línea 1244)
         const alternativeHeaders = [
-            'producto', 'lote', 'fecha', 'cantidad',
-            'mes', 'año', 'perdidas', 'observaciones'
+            'producto', 'lote',
+            'fecha', 'fecha fab',
+            'cantidad',
+            'mes', 'meses',
+            'año',
+            'perdidas',
+            'observaciones'
         ];
 
         headerMatch = false;
@@ -1275,7 +1336,7 @@ function processExcelData(workbook, fileName) {
         }
 
         if (!headerMatch) {
-            showToast('El archivo no tiene el formato esperado. Por favor, verifica los nombres de las columnas.', 'error');
+            showToast('El archivo no tiene el formato esperado. Por favor, verifica que contenga las columnas: Producto, lote, FECHA FAB (o fecha), cantidad, Meses, Año', 'error');
             return;
         }
     }
@@ -1286,24 +1347,58 @@ function processExcelData(workbook, fileName) {
         if (!row || row.length === 0) continue;
 
         try {
-            // Crear objeto de registro
+            // Crear objeto de registro con mapeo específico para el Excel del usuario
+            // NOTA: Los encabezados están normalizados a minúsculas (línea 1244)
             const record = {
+                // Producto: buscar en columnas 'producto'
                 producto: getCellValue(row, headers, 'producto') || '',
+
+                // Lote: buscar en columnas 'lote'
                 lote: getCellValue(row, headers, 'lote') || '',
-                fecha: parseDate(getCellValue(row, headers, 'fecha fabricación') ||
-                    getCellValue(row, headers, 'fecha') || ''),
-                cantidad: parseFloat(getCellValue(row, headers, 'cantidad (l)') ||
-                    getCellValue(row, headers, 'cantidad') || 0),
-                mes: parseInt(getCellValue(row, headers, 'mes') ||
-                    (new Date(parseDate(getCellValue(row, headers, 'fecha fabricación') ||
-                        getCellValue(row, headers, 'fecha') || '')).getMonth() + 1) ||
-                    new Date().getMonth() + 1),
-                año: parseInt(getCellValue(row, headers, 'año') ||
-                    (new Date(parseDate(getCellValue(row, headers, 'fecha fabricación') ||
-                        getCellValue(row, headers, 'fecha') || '')).getFullYear()) ||
-                    new Date().getFullYear()),
-                perdidas: getCellValue(row, headers, 'pérdidas') ||
-                    getCellValue(row, headers, 'perdidas') || '',
+
+                // Fecha: buscar en 'fecha fab', 'fecha fabricación', 'fecha', etc.
+                fecha: parseDate(
+                    getCellValue(row, headers, 'fecha fab') ||
+                    getCellValue(row, headers, 'fecha fabricación') ||
+                    getCellValue(row, headers, 'fecha fabricacion') ||
+                    getCellValue(row, headers, 'fecha') || ''
+                ),
+
+                // Cantidad: buscar en 'cantidad', 'cantidad (l)', etc.
+                cantidad: parseFloat(
+                    getCellValue(row, headers, 'cantidad') ||
+                    getCellValue(row, headers, 'cantidad (l)') || 0
+                ),
+
+                // Mes: buscar en 'meses', 'mes' o extraer de la fecha
+                mes: parseInt(
+                    getCellValue(row, headers, 'meses') ||
+                    getCellValue(row, headers, 'mes') ||
+                    (new Date(parseDate(
+                        getCellValue(row, headers, 'fecha fab') ||
+                        getCellValue(row, headers, 'fecha fabricación') ||
+                        getCellValue(row, headers, 'fecha') || ''
+                    )).getMonth() + 1) ||
+                    new Date().getMonth() + 1
+                ),
+
+                // Año: buscar en 'año' o extraer de la fecha
+                año: parseInt(
+                    getCellValue(row, headers, 'año') ||
+                    (new Date(parseDate(
+                        getCellValue(row, headers, 'fecha fab') ||
+                        getCellValue(row, headers, 'fecha fabricación') ||
+                        getCellValue(row, headers, 'fecha') || ''
+                    )).getFullYear()) ||
+                    new Date().getFullYear()
+                ),
+
+                // Pérdidas: buscar en 'perdidas', 'pérdidas', 'litros perdidos', etc.
+                perdidas: getCellValue(row, headers, 'perdidas') ||
+                    getCellValue(row, headers, 'pérdidas') ||
+                    getCellValue(row, headers, 'litros perdidos') || '',
+
+                // Observaciones: buscar en 'observaciones'
                 observaciones: getCellValue(row, headers, 'observaciones') || ''
             };
 
@@ -2137,13 +2232,57 @@ function showToast(message, type = 'info') {
     }, 5000);
 }
 
+// ============================================
+// INICIALIZACIÓN DE LA APLICACIÓN
+// ============================================
+
+// Función principal de inicialización
+function initializeApp() {
+    console.log('🚀 Inicializando aplicación...');
+
+    // Cargar datos guardados
+    loadSavedData();
+
+    // Aplicar tema guardado
+    applySavedTheme();
+
+    // Configurar event listeners
+    setupEventListeners();
+
+    // Configurar importación de Excel
+    setupImportExcel();
+
+    // Configurar exportaciones
+    setupExportButtons();
+
+    // Actualizar interfaz
+    // updateDashboard(); // Función no definida
+    // renderTable(); // Función no definida
+    // populateProductFilters(); // Función no definida
+    // populateYearFilters(); // Función no definida
+    // populateMonthFilters(); // Función no definida
+
+    console.log('✅ Aplicación inicializada correctamente');
+}
+
+// Configurar botones de exportación
+function setupExportButtons() {
+    const exportXlsxBtn = document.getElementById('export-xlsx-btn');
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+
+    if (exportXlsxBtn) {
+        exportXlsxBtn.addEventListener('click', exportToXLSX);
+    }
+
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', exportToPDF);
+    }
+}
+
 // Cuando la ventana se carga completamente
 window.addEventListener('load', function () {
-    // Verificar si hay un tema guardado en localStorage
-    const savedTheme = localStorage.getItem('veterinaria-theme');
-    if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    }
+    // Inicializar la aplicación
+    initializeApp();
 });
 
 // ============================================
