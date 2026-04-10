@@ -669,9 +669,6 @@ function setupEventListeners() {
     document.getElementById('export-xlsx-btn').addEventListener('click', exportToXLSX);
     document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
 
-    // Configurar importación Excel
-    setupImportExcel();
-
     // Guardar datos antes de que la página se cierre
     window.addEventListener('beforeunload', function () {
         saveData();
@@ -2322,9 +2319,6 @@ function initializeApp() {
 
     // Configurar event listeners
     setupEventListeners();
-
-    // Configurar importación de Excel
-    setupImportExcel();
 
     // Configurar exportaciones
     setupExportButtons();
