@@ -866,25 +866,46 @@ function switchToSection(sectionName) {
     }
 }
 
-// Rellenar filtros de productos
+// Rellenar filtros de productos y años dinámicamente
 function populateProductFilters() {
+    // --- Productos ---
     const productFilter = document.getElementById('product-filter');
-
-    // Obtener productos únicos de los registros
     const uniqueProducts = [...new Set(appData.records.map(record => record.producto))];
 
-    // Limpiar opciones existentes (excepto la primera)
     while (productFilter.options.length > 1) {
         productFilter.remove(1);
     }
 
-    // Agregar productos a los filtros
     uniqueProducts.sort().forEach(product => {
         const option = document.createElement('option');
         option.value = product;
         option.textContent = product;
         productFilter.appendChild(option);
     });
+
+    // --- Años (dinámico: se generan desde los datos reales) ---
+    const yearFilter = document.getElementById('year-filter');
+    const currentValue = yearFilter.value;
+
+    const uniqueYears = [...new Set(appData.records.map(record => record.año))]
+        .filter(y => y && !isNaN(y))
+        .sort((a, b) => a - b);
+
+    while (yearFilter.options.length > 1) {
+        yearFilter.remove(1);
+    }
+
+    uniqueYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year.toString();
+        option.textContent = year.toString();
+        yearFilter.appendChild(option);
+    });
+
+    // Restaurar valor si sigue siendo válido
+    if (currentValue !== 'all' && uniqueYears.map(y => y.toString()).includes(currentValue)) {
+        yearFilter.value = currentValue;
+    }
 }
 
 // Renderizar tabla con datos
