@@ -214,12 +214,19 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Fecha Fabricación</th>
+                                <th>FECHA FAB</th>
                                 <th>Producto</th>
                                 <th>Lote</th>
-                                <th>Cantidad (L)</th>
+                                <th>Cantidad</th>
+                                <th>Fecha Fab.</th>
+                                <th>Fecha Caducidad</th>
+                                <th>Rango PH</th>
+                                <th>pH</th>
+                                <th>Rango Densidad</th>
+                                <th>Densidad</th>
                                 <th>Mes</th>
                                 <th>Año</th>
+                                <th>Análisis</th>
                                 <th>Pérdidas</th>
                                 <th>Observaciones</th>
                                 <th>Acciones</th>
@@ -382,12 +389,45 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="form-date">Fecha Fabricación *</label>
+                            <label for="form-date">FECHA FAB *</label>
                             <input type="date" id="form-date" required>
                         </div>
                         <div class="form-group">
-                            <label for="form-quantity">Cantidad (L) *</label>
+                            <label for="form-quantity">Cantidad *</label>
                             <input type="number" id="form-quantity" min="0" step="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-fecha-fabricacio">Fecha Fab. (Mes)</label>
+                            <input type="text" id="form-fecha-fabricacio">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-fecha-caducidad">Fecha Caducidad</label>
+                            <input type="text" id="form-fecha-caducidad">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-rango-ph">Rango PH</label>
+                            <input type="text" id="form-rango-ph">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-ph">pH</label>
+                            <input type="text" id="form-ph">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-rango-densidad">Rango Densidad</label>
+                            <input type="text" id="form-rango-densidad">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-densidad">Densidad</label>
+                            <input type="text" id="form-densidad">
                         </div>
                     </div>
                     
@@ -425,7 +465,11 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="form-losses">Pérdidas (L)</label>
+                            <label for="form-analisis">Análisis</label>
+                            <input type="text" id="form-analisis">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-losses">Pérdidas</label>
                             <input type="text" id="form-losses" placeholder="Ej: 50 LITROS">
                         </div>
                     </div>

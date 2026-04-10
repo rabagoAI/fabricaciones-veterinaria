@@ -966,8 +966,15 @@ function renderTable() {
               <td>${record.producto}</td>
               <td>${record.lote}</td>
               <td>${record.cantidad.toLocaleString()}</td>
+              <td>${record.fechaFabricacio || '-'}</td>
+              <td>${record.fechaCaducidad || '-'}</td>
+              <td>${record.rangoPH || '-'}</td>
+              <td>${record.ph || '-'}</td>
+              <td>${record.rangoDensidad || '-'}</td>
+              <td>${record.densidad || '-'}</td>
               <td>${monthName}</td>
               <td>${record.año}</td>
+              <td>${record.analisis || '-'}</td>
               <td class="${record.perdidas && record.perdidas.trim() !== '' ? 'losses-cell' : ''}">${record.perdidas || '-'}</td>
               <td>${record.observaciones ? (record.observaciones.length > 50 ? record.observaciones.substring(0, 50) + '...' : record.observaciones) : '-'}</td>
               <td>
@@ -1059,6 +1066,13 @@ function showRecordModal(recordId = null) {
             document.getElementById('form-lote').value = record.lote;
             document.getElementById('form-date').value = record.fecha;
             document.getElementById('form-quantity').value = record.cantidad;
+            document.getElementById('form-fecha-fabricacio').value = record.fechaFabricacio || '';
+            document.getElementById('form-fecha-caducidad').value = record.fechaCaducidad || '';
+            document.getElementById('form-rango-ph').value = record.rangoPH || '';
+            document.getElementById('form-ph').value = record.ph || '';
+            document.getElementById('form-rango-densidad').value = record.rangoDensidad || '';
+            document.getElementById('form-densidad').value = record.densidad || '';
+            document.getElementById('form-analisis').value = record.analisis || '';
             document.getElementById('form-month').value = record.mes;
             document.getElementById('form-year').value = record.año;
             document.getElementById('form-losses').value = record.perdidas || '';
@@ -1109,6 +1123,13 @@ function handleRecordSubmit(e) {
         lote: document.getElementById('form-lote').value.trim(),
         fecha: document.getElementById('form-date').value,
         cantidad: parseInt(document.getElementById('form-quantity').value),
+        fechaFabricacio: document.getElementById('form-fecha-fabricacio').value.trim() || '',
+        fechaCaducidad: document.getElementById('form-fecha-caducidad').value.trim() || '',
+        rangoPH: document.getElementById('form-rango-ph').value.trim() || '',
+        ph: document.getElementById('form-ph').value.trim() || '',
+        rangoDensidad: document.getElementById('form-rango-densidad').value.trim() || '',
+        densidad: document.getElementById('form-densidad').value.trim() || '',
+        analisis: document.getElementById('form-analisis').value.trim() || '',
         mes: parseInt(document.getElementById('form-month').value),
         año: parseInt(document.getElementById('form-year').value),
         perdidas: document.getElementById('form-losses').value.trim() || '',
@@ -1254,7 +1275,7 @@ function handleFileSelect(event) {
     reader.onload = function (e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
 
             // Procesar los datos
             processExcelData(workbook, file.name);
@@ -1280,126 +1301,98 @@ function processExcelData(workbook, fileName) {
         duplicates: 0
     };
 
-    // Obtener la primera hoja
-    const sheetName = workbook.SheetNames[0];
+    // Buscar la hoja principal: primero 'Hoja1', luego la primera disponible
+    const sheetName = workbook.SheetNames.includes('Hoja1')
+        ? 'Hoja1'
+        : workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    // Convertir a JSON
-    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    // Convertir a JSON con todas las filas raw
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    if (data.length < 2) {
+    if (rawData.length < 2) {
         showToast('El archivo está vacío o no contiene datos', 'warning');
         return;
     }
 
-    // Obtener encabezados (primera fila)
-    const headers = data[0].map(h => h ? h.toString().trim().toLowerCase() : '');
-
-    // DEBUG: Mostrar encabezados detectados
-    console.log('📋 Encabezados detectados en el Excel:', headers);
-    console.log('📋 Total de columnas:', headers.length);
-
-    // Encabezados esperados (nombres comunes)
-    const expectedHeaders = [
-        'fecha fabricación', 'producto', 'lote', 'cantidad (l)',
-        'mes', 'año', 'pérdidas', 'observaciones'
-    ];
-
-    // Verificar que los encabezados coincidan (al menos parcialmente)
-    let headerMatch = false;
-    for (const expected of expectedHeaders) {
-        if (headers.includes(expected)) {
-            headerMatch = true;
+    // --- Detección automática de la fila de cabeceras ---
+    // Buscar la fila que contenga 'producto' o 'fecha fab' (palabras clave del Excel real)
+    let headerRowIndex = 0;
+    for (let r = 0; r < Math.min(rawData.length, 5); r++) {
+        const rowNorm = (rawData[r] || []).map(h => h ? h.toString().trim().toLowerCase() : '');
+        if (rowNorm.some(h => h === 'producto' || h === 'fecha fab' || h === 'lote')) {
+            headerRowIndex = r;
             break;
         }
     }
 
-    if (!headerMatch) {
-        // Intentar con nombres alternativos y específicos del Excel del usuario
-        // NOTA: Los encabezados ya están en minúsculas (línea 1244)
-        const alternativeHeaders = [
-            'producto', 'lote',
-            'fecha', 'fecha fab',
-            'cantidad',
-            'mes', 'meses',
-            'año',
-            'perdidas',
-            'observaciones'
-        ];
+    const headers = (rawData[headerRowIndex] || []).map(h => h ? h.toString().trim().toLowerCase() : '');
+    const data = rawData.slice(headerRowIndex + 1); // filas de datos a partir de la cabecera
 
-        headerMatch = false;
-        for (const expected of alternativeHeaders) {
-            if (headers.includes(expected)) {
-                headerMatch = true;
-                break;
-            }
-        }
+    console.log('📋 Hoja usada:', sheetName);
+    console.log('📋 Fila de cabecera detectada:', headerRowIndex);
+    console.log('📋 Encabezados detectados:', headers);
 
-        if (!headerMatch) {
-            showToast('El archivo no tiene el formato esperado. Por favor, verifica que contenga las columnas: Producto, lote, FECHA FAB (o fecha), cantidad, Meses, Año', 'error');
-            return;
-        }
+    const hasAnyHeader = headers.some(h => h && h.trim().length > 0);
+    if (!hasAnyHeader) {
+        showToast('El archivo está vacío o la primera fila no contiene encabezados', 'error');
+        return;
     }
 
     // Procesar filas de datos
-    for (let i = 1; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
         const row = data[i];
         if (!row || row.length === 0) continue;
 
+        // Saltar filas vacías (sin producto ni lote)
+        const prodVal = getCellValue(row, headers, 'producto');
+        const loteVal = getCellValue(row, headers, 'lote');
+        if (!prodVal && !loteVal) continue;
+
         try {
-            // Crear objeto de registro con mapeo específico para el Excel del usuario
-            // NOTA: Los encabezados están normalizados a minúsculas (línea 1244)
+            // Fecha de fabricación (columna FECHA FAB = fecha real de fab, formato fecha Excel)
+            const fechaFabRaw = getCellValue(row, headers, 'fecha fab') || '';
+            const fechaParsed = parseDate(fechaFabRaw);
+
+            // fechaFabricacion: texto del mes (ej. "Marzo") — columna 'fechafabricacion'
+            const fechaFabricacionTexto = getCellValue(row, headers, 'fechafabricacion') ||
+                getCellValue(row, headers, 'fecha fabricacion') ||
+                getCellValue(row, headers, 'fechafabricación') || '';
+
+            // fechaCaducidad: fecha de caducidad (formato fecha Excel)
+            const fechaCaducidadRaw = getCellValue(row, headers, 'fechacaducidad') ||
+                getCellValue(row, headers, 'fecha caducidad') || '';
+            const fechaCaducidadParsed = parseDate(fechaCaducidadRaw);
+
+            // Mes: desde columna 'meses' (número) o extraer de la fecha
+            let mesVal = getCellValue(row, headers, 'meses');
+            if (!mesVal && fechaParsed) {
+                mesVal = new Date(fechaParsed).getMonth() + 1;
+            }
+
+            // Año: desde columna 'año' o extraer de la fecha
+            let añoVal = getCellValue(row, headers, 'año');
+            if (!añoVal && fechaParsed) {
+                añoVal = new Date(fechaParsed).getFullYear();
+            }
+
             const record = {
-                // Producto: buscar en columnas 'producto'
-                producto: getCellValue(row, headers, 'producto') || '',
-
-                // Lote: buscar en columnas 'lote'
-                lote: getCellValue(row, headers, 'lote') || '',
-
-                // Fecha: buscar en 'fecha fab', 'fecha fabricación', 'fecha', etc.
-                fecha: parseDate(
-                    getCellValue(row, headers, 'fecha fab') ||
-                    getCellValue(row, headers, 'fecha fabricación') ||
-                    getCellValue(row, headers, 'fecha fabricacion') ||
-                    getCellValue(row, headers, 'fecha') || ''
-                ),
-
-                // Cantidad: buscar en 'cantidad', 'cantidad (l)', etc.
-                cantidad: parseFloat(
-                    getCellValue(row, headers, 'cantidad') ||
-                    getCellValue(row, headers, 'cantidad (l)') || 0
-                ),
-
-                // Mes: buscar en 'meses', 'mes' o extraer de la fecha
-                mes: parseInt(
-                    getCellValue(row, headers, 'meses') ||
-                    getCellValue(row, headers, 'mes') ||
-                    (new Date(parseDate(
-                        getCellValue(row, headers, 'fecha fab') ||
-                        getCellValue(row, headers, 'fecha fabricación') ||
-                        getCellValue(row, headers, 'fecha') || ''
-                    )).getMonth() + 1) ||
-                    new Date().getMonth() + 1
-                ),
-
-                // Año: buscar en 'año' o extraer de la fecha
-                año: parseInt(
-                    getCellValue(row, headers, 'año') ||
-                    (new Date(parseDate(
-                        getCellValue(row, headers, 'fecha fab') ||
-                        getCellValue(row, headers, 'fecha fabricación') ||
-                        getCellValue(row, headers, 'fecha') || ''
-                    )).getFullYear()) ||
-                    new Date().getFullYear()
-                ),
-
-                // Pérdidas: buscar en 'perdidas', 'pérdidas', 'litros perdidos', etc.
-                perdidas: getCellValue(row, headers, 'perdidas') ||
-                    getCellValue(row, headers, 'pérdidas') ||
-                    getCellValue(row, headers, 'litros perdidos') || '',
-
-                // Observaciones: buscar en 'observaciones'
-                observaciones: getCellValue(row, headers, 'observaciones') || ''
+                producto: (prodVal || '').toString().trim(),
+                lote: (loteVal || '').toString().trim(),
+                fecha: fechaParsed || new Date().toISOString().split('T')[0],
+                cantidad: parseFloat(getCellValue(row, headers, 'cantidad') || 0),
+                fechaFabricacio: fechaFabricacionTexto ? fechaFabricacionTexto.toString().trim() : '',
+                fechaCaducidad: fechaCaducidadParsed || fechaCaducidadRaw.toString().trim(),
+                rangoPH: (getCellValue(row, headers, 'rango ph') || '').toString().trim(),
+                ph: (getCellValue(row, headers, 'ph') || '').toString().trim(),
+                rangoDensidad: (getCellValue(row, headers, 'rango densidad') || '').toString().trim(),
+                densidad: (getCellValue(row, headers, 'densidad') || '').toString().trim(),
+                analisis: (getCellValue(row, headers, 'analisis') || '').toString().trim(),
+                mes: parseInt(mesVal) || (new Date().getMonth() + 1),
+                año: parseInt(añoVal) || new Date().getFullYear(),
+                perdidas: (getCellValue(row, headers, 'perdidas') ||
+                    getCellValue(row, headers, 'pérdidas') || '').toString().trim(),
+                observaciones: (getCellValue(row, headers, 'observaciones') || '').toString().trim()
             };
 
             // Validar registro
@@ -1419,10 +1412,10 @@ function processExcelData(workbook, fileName) {
                     importData.records.push(record);
                 }
             } else {
-                importData.errors.push(`Fila ${i + 1}: ${validation.error}`);
+                importData.errors.push(`Fila ${i + 2}: ${validation.error}`);
             }
         } catch (error) {
-            importData.errors.push(`Fila ${i + 1}: Error al procesar - ${error.message}`);
+            importData.errors.push(`Fila ${i + 2}: Error al procesar - ${error.message}`);
         }
     }
 
@@ -1430,25 +1423,28 @@ function processExcelData(workbook, fileName) {
     showImportSummary(fileName);
 }
 
-// Obtener valor de celda basado en encabezado
+// Obtener valor de celda basado en encabezado (con búsqueda parcial/fuzzy)
 function getCellValue(row, headers, headerName) {
-    const index = headers.indexOf(headerName);
-    if (index !== -1 && row[index] !== undefined) {
-        return row[index];
+    // 1. Búsqueda exacta normalizada
+    const normalized = headerName.toLowerCase().trim();
+    const exactIdx = headers.indexOf(normalized);
+    if (exactIdx !== -1 && row[exactIdx] !== undefined && row[exactIdx] !== null && row[exactIdx] !== '') {
+        return row[exactIdx];
     }
 
-    // Intentar con variaciones
-    const variations = [
-        headerName,
-        headerName.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u'),
-        headerName.replace(' (l)', '').replace(' (L)', ''),
-        headerName.replace('fabricación', 'fabricacion')
-    ];
+    // 2. Búsqueda parcial: buscar un header que CONTENGA la palabra clave
+    for (let i = 0; i < headers.length; i++) {
+        const h = (headers[i] || '').toString().toLowerCase().trim();
+        if (h && h.includes(normalized) && row[i] !== undefined && row[i] !== null && row[i] !== '') {
+            return row[i];
+        }
+    }
 
-    for (const variation of variations) {
-        const idx = headers.indexOf(variation);
-        if (idx !== -1 && row[idx] !== undefined) {
-            return row[idx];
+    // 3. Búsqueda inversa: el nombre buscado contiene la cabecera del Excel
+    for (let i = 0; i < headers.length; i++) {
+        const h = (headers[i] || '').toString().toLowerCase().trim();
+        if (h && normalized.includes(h) && h.length > 2 && row[i] !== undefined && row[i] !== null && row[i] !== '') {
+            return row[i];
         }
     }
 
@@ -1457,7 +1453,23 @@ function getCellValue(row, headers, headerName) {
 
 // Parsear fecha
 function parseDate(dateStr) {
-    if (!dateStr) return '';
+    if (dateStr === undefined || dateStr === null || dateStr === '') return '';
+
+    // Si viene como objeto Date (SheetJS puede devolverlo así)
+    if (dateStr instanceof Date) {
+        return !isNaN(dateStr.getTime()) ? dateStr.toISOString().split('T')[0] : '';
+    }
+
+    // Si viene como número (Excel serial date)
+    if (typeof dateStr === 'number' || (typeof dateStr === 'string' && !isNaN(Number(dateStr)))) {
+        const serial = Number(dateStr);
+        // Validar que parece un serial de excel (ej. > 20000 para años 1950+)
+        if (serial > 20000 && serial < 100000) {
+            const epoch = new Date(1899, 11, 30);
+            const date = new Date(epoch.getTime() + serial * 24 * 60 * 60 * 1000);
+            return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : '';
+        }
+    }
 
     // Intentar diferentes formatos de fecha
     const formats = [
@@ -1472,7 +1484,7 @@ function parseDate(dateStr) {
             if (parts.length === 3) {
                 const day = parseInt(parts[0]);
                 const month = parseInt(parts[1]) - 1;
-                const year = parseInt(parts[2]);
+                const year = parts[2].length === 2 ? parseInt('20' + parts[2]) : parseInt(parts[2]);
                 const date = new Date(year, month, day);
                 return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
             }
@@ -1484,21 +1496,29 @@ function parseDate(dateStr) {
             if (parts.length === 3) {
                 const month = parseInt(parts[0]) - 1;
                 const day = parseInt(parts[1]);
-                const year = parseInt(parts[2]);
+                const year = parts[2].length === 2 ? parseInt('20' + parts[2]) : parseInt(parts[2]);
                 const date = new Date(year, month, day);
                 return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
             }
             return null;
         },
-        // Formato YYYY-MM-DD
+        // Formato YYYY-MM-DD o DD-MM-YY(YY)
         (str) => {
             const parts = str.split('-');
-            if (parts.length === 3 && parts[0].length === 4) {
-                const year = parseInt(parts[0]);
-                const month = parseInt(parts[1]) - 1;
-                const day = parseInt(parts[2]);
-                const date = new Date(year, month, day);
-                return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    const year = parseInt(parts[0]);
+                    const month = parseInt(parts[1]) - 1;
+                    const day = parseInt(parts[2]);
+                    const date = new Date(year, month, day);
+                    return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
+                } else {
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]) - 1;
+                    const year = parts[2].length === 2 ? parseInt('20' + parts[2]) : parseInt(parts[2]);
+                    const date = new Date(year, month, day);
+                    return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
+                }
             }
             return null;
         }
@@ -1517,28 +1537,33 @@ function validateImportRecord(record, rowNumber) {
     const errors = [];
 
     // Validar campos requeridos
-    if (!record.producto || record.producto.trim() === '') {
+    if (!record.producto || record.producto.toString().trim() === '') {
         errors.push('Producto es requerido');
     }
 
-    if (!record.lote || record.lote.trim() === '') {
+    if (!record.lote || record.lote.toString().trim() === '') {
         errors.push('Lote es requerido');
     }
 
     if (!record.fecha) {
-        errors.push('Fecha de fabricación es requerida');
+        // En lugar de fallar, asignamos la fecha de hoy
+        record.fecha = new Date().toISOString().split('T')[0];
+        if (!record.observaciones.includes('Fecha auto-asignada')) {
+            record.observaciones = (record.observaciones + ' [Fecha import auto-asignada]').trim();
+        }
     }
 
-    if (!record.cantidad || isNaN(record.cantidad) || record.cantidad <= 0) {
-        errors.push('Cantidad debe ser un número positivo');
+    if (record.cantidad === undefined || record.cantidad === null || isNaN(record.cantidad)) {
+        // Asignamos 0 si no se puede leer para que no falle la importación
+        record.cantidad = 0;
     }
 
     if (!record.mes || isNaN(record.mes) || record.mes < 1 || record.mes > 12) {
-        errors.push('Mes debe ser un número entre 1 y 12');
+        record.mes = new Date().getMonth() + 1;
     }
 
     if (!record.año || isNaN(record.año) || record.año < 2000 || record.año > 2100) {
-        errors.push('Año debe ser un número válido');
+        record.año = new Date().getFullYear();
     }
 
     return {
@@ -1662,7 +1687,7 @@ function exportToExcel() {
     }
 
     // Crear contenido CSV
-    let csvContent = "ID,Fecha Fabricación,Producto,Lote,Cantidad (L),Mes,Año,Pérdidas,Observaciones\n";
+    let csvContent = "ID,FECHA FAB,Producto,Lote,Cantidad,Fecha Fab.,Fecha Caducidad,Rango PH,pH,Rango Densidad,Densidad,Mes,Año,Análisis,Pérdidas,Observaciones\n";
 
     appData.records.forEach(record => {
         const row = [
@@ -1671,8 +1696,15 @@ function exportToExcel() {
             `"${record.producto}"`,
             record.lote,
             record.cantidad,
+            `"${record.fechaFabricacio || ''}"`,
+            `"${record.fechaCaducidad || ''}"`,
+            `"${record.rangoPH || ''}"`,
+            record.ph || '',
+            `"${record.rangoDensidad || ''}"`,
+            record.densidad || '',
             record.mes,
             record.año,
+            `"${record.analisis || ''}"`,
             `"${record.perdidas || ''}"`,
             `"${(record.observaciones || '').replace(/"/g, '""')}"`
         ].join(',');
@@ -1731,7 +1763,7 @@ function exportToXLSX() {
     // Crear datos para la hoja de cálculo
     const data = [
         // Encabezados
-        ['ID', 'Fecha Fabricación', 'Producto', 'Lote', 'Cantidad (L)', 'Mes', 'Año', 'Pérdidas', 'Observaciones']
+        ['ID', 'FECHA FAB', 'Producto', 'Lote', 'Cantidad', 'Fecha Fab.', 'Fecha Caducidad', 'Rango PH', 'pH', 'Rango Densidad', 'Densidad', 'Mes', 'Año', 'Análisis', 'Pérdidas', 'Observaciones']
     ];
 
     // Agregar registros
@@ -1742,8 +1774,15 @@ function exportToXLSX() {
             record.producto,
             record.lote,
             record.cantidad,
+            record.fechaFabricacio || '',
+            record.fechaCaducidad || '',
+            record.rangoPH || '',
+            record.ph || '',
+            record.rangoDensidad || '',
+            record.densidad || '',
             record.mes,
             record.año,
+            record.analisis || '',
             record.perdidas || '',
             record.observaciones || ''
         ]);
@@ -1886,32 +1925,46 @@ function exportToPDF() {
             record.producto,
             record.lote,
             record.cantidad.toLocaleString(),
+            record.fechaFabricacio || '-',
+            record.fechaCaducidad || '-',
+            record.rangoPH || '-',
+            record.ph || '-',
+            record.rangoDensidad || '-',
+            record.densidad || '-',
             record.mes,
             record.año,
+            record.analisis || '-',
             record.perdidas || '-',
             record.observaciones ? (record.observaciones.length > 30 ? record.observaciones.substring(0, 30) + '...' : record.observaciones) : '-'
         ]);
 
         // Configurar autoTable
         doc.autoTable({
-            head: [['ID', 'Fecha', 'Producto', 'Lote', 'Cantidad (L)', 'Mes', 'Año', 'Pérdidas', 'Observaciones']],
+            head: [['ID', 'FECHA FAB', 'Producto', 'Lote', 'Cant.', 'F.Fab', 'F.Cad', 'R.pH', 'pH', 'R.Den', 'Den', 'Mes', 'Año', 'Anál.', 'Pérdidas', 'Obs.']],
             body: tableData,
             startY: 60,
             theme: 'grid',
             headStyles: { fillColor: [76, 175, 80] },
-            styles: { fontSize: 8, cellPadding: 2 },
+            styles: { fontSize: 6, cellPadding: 1 },
             columnStyles: {
-                0: { cellWidth: 15 },
-                1: { cellWidth: 25 },
-                2: { cellWidth: 40 },
-                3: { cellWidth: 25 },
-                4: { cellWidth: 25 },
-                5: { cellWidth: 20 },
-                6: { cellWidth: 20 },
-                7: { cellWidth: 25 },
-                8: { cellWidth: 50 }
+                0: { cellWidth: 8 },
+                1: { cellWidth: 17 },
+                2: { cellWidth: 25 },
+                3: { cellWidth: 15 },
+                4: { cellWidth: 12 },
+                5: { cellWidth: 12 },
+                6: { cellWidth: 15 },
+                7: { cellWidth: 12 },
+                8: { cellWidth: 10 },
+                9: { cellWidth: 12 },
+                10: { cellWidth: 10 },
+                11: { cellWidth: 8 },
+                12: { cellWidth: 10 },
+                13: { cellWidth: 15 },
+                14: { cellWidth: 17 },
+                15: { cellWidth: 35 }
             },
-            margin: { left: 14, right: 14 },
+            margin: { left: 5, right: 5 },
             pageBreak: 'auto'
         });
 
